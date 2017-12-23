@@ -1,0 +1,11 @@
+.idea
+composer.lock
+*.log
+#thinkphp
+# zend studio for eclipse project files
+.buildpath
+.project
+.settings
+
+.travis.yml
+
