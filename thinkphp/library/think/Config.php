@@ -156,6 +156,7 @@ class Config
      * @param  mixed        $value 配置值
      * @param  string       $range 作用域
      * @return mixed
+	 * 在基础文件base.php里调用该静态方法，把惯例配置convention.php加载到内存里
      */
     public static function set($name, $value = null, $range = '')
     {
@@ -187,6 +188,7 @@ class Config
             }
 
             return self::$config[$range] = array_merge(
+				//全变成小写，合并进来；
                 self::$config[$range], array_change_key_case($name)
             );
         }

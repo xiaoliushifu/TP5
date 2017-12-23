@@ -274,7 +274,7 @@ class Loader
     }
 
     /**
-     * 注册自动加载机制
+     * 注册自动加载机制,在base.php文件里调用
      * @access public
      * @param  callable $autoload 自动加载处理方法
      * @return void
