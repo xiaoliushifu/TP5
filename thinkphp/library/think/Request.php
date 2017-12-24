@@ -177,6 +177,8 @@ class Request
     public static function instance($options = [])
     {
         if (is_null(self::$instance)) {
+			//这里为啥不是new self而是new static，你能想到吗？
+			//因为有可能这个Request被继承，那么此时子类如果sub::instanch()的话，就是实例化父类Request了，是这样理解吗？
             self::$instance = new static($options);
         }
         return self::$instance;
@@ -422,7 +424,7 @@ class Request
                 // 禁止伪静态访问
                 $this->path = $pathinfo;
             } elseif ($suffix) {
-                // 去除正常的URL后缀
+                // 去除正常的URL后缀，默认就是那个html
                 $this->path = preg_replace('/\.(' . ltrim($suffix, '.') . ')$/i', '', $pathinfo);
             } else {
                 // 允许任何后缀访问

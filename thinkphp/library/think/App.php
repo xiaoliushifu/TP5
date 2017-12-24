@@ -73,9 +73,11 @@ class App
      * @param  Request $request 请求对象
      * @return Response
      * @throws Exception
+     * 该方法是应用第一个调用的方法，是引导文件执行后执行的
      */
     public static function run(Request $request = null)
     {
+        //instanch方法内部就是一个new而已，保存到自己的一个属性而已。也就是自己引用自己。
         $request = is_null($request) ? Request::instance() : $request;
 
         try {
@@ -91,7 +93,7 @@ class App
                     Route::bind($name);
                 }
             }
-
+            //设置全局过滤方法
             $request->filter($config['default_filter']);
 
             // 默认语言
@@ -149,9 +151,7 @@ class App
             $response = $data;
         } elseif (!is_null($data)) {
             // 默认自动识别响应输出类型
-            $type = $request->isAjax() ?
-            Config::get('default_ajax_return') :
-            Config::get('default_return_type');
+            $type = $request->isAjax() ?Config::get('default_ajax_return') : Config::get('default_return_type');
 
             $response = Response::create($data, $type);
         } else {
@@ -173,23 +173,28 @@ class App
     {
         if (empty(self::$init)) {
             if (defined('APP_NAMESPACE')) {
+                //确定应用的根命名空间
                 self::$namespace = APP_NAMESPACE;
             }
-
+            //设置一下这个应用的命名空间对应的文件系统路径，默认是app对应./application
             Loader::addNamespace(self::$namespace, APP_PATH);
 
-            // 初始化应用
+            // 初始化应用，application下的几个.php文件，因为没有传递模块参数
             $config       = self::init();
             self::$suffix = $config['class_suffix'];
 
-            // 应用调试模式
+            // 应用调试模式，优先从环境变量里读取，如果没有，再从配置信息里读取
             self::$debug = Env::get('app_debug', Config::get('app_debug'));
 
+            //非debug模式，则关闭网页的错误输出，是网页的，不是其他形式的，比如可以输出到系统日志等其他形式。
             if (!self::$debug) {
                 ini_set('display_errors', 'Off');
+            //非命令行下执行php脚本
             } elseif (!IS_CLI) {
                 // 重新申请一块比较大的 buffer
+                //当开启过输出缓冲时，ob_get_level会返回大于0的数
                 if (ob_get_level() > 0) {
+                    //获得缓冲区的内容，并关闭这个缓冲区
                     $output = ob_get_clean();
                 }
 
@@ -200,12 +205,12 @@ class App
                 }
 
             }
-
+            //自动加载里，添加一个命名空间
             if (!empty($config['root_namespace'])) {
                 Loader::addNamespace($config['root_namespace']);
             }
 
-            // 加载额外文件
+            // 加载额外文件，默认就是那个helper.php
             if (!empty($config['extra_file_list'])) {
                 foreach ($config['extra_file_list'] as $file) {
                     $file = strpos($file, '.') ? $file : APP_PATH . $file . EXT;
@@ -233,6 +238,16 @@ class App
      * @access public
      * @param string $module 模块名
      * @return array
+     * 这个方法，非常重要，完成了当前应用下各个配置文件的加载（用load方法加载）
+     * 默认就是application目录下的
+     * 最后再通过get方法返回，一定要多读几遍
+     * 比如
+     * config.php,
+     * database.php,
+     * tags.php,
+     * 还有extra目录，
+     * 状态配置文件，
+     * 最后是common.php
      */
     private static function init($module = '')
     {
@@ -245,14 +260,14 @@ class App
         } elseif (is_file(RUNTIME_PATH . $module . 'init' . EXT)) {
             include RUNTIME_PATH . $module . 'init' . EXT;
         } else {
-            // 加载模块配置
+            // 加载模块配置,config.php
             $config = Config::load(CONF_PATH . $module . 'config' . CONF_EXT);
 
-            // 读取数据库配置文件
+            // 读取数据库配置文件  database.php
             $filename = CONF_PATH . $module . 'database' . CONF_EXT;
             Config::load($filename, 'database');
 
-            // 读取扩展配置文件
+            // 读取扩展配置文件,extra是一个目录，目录下每个文件的内容，还是配置信息
             if (is_dir(CONF_PATH . $module . 'extra')) {
                 $dir   = CONF_PATH . $module . 'extra';
                 $files = scandir($dir);
@@ -265,16 +280,17 @@ class App
             }
 
             // 加载应用状态配置
+            //这个估计就是在家办公，在公司办公，等不同场景下的配置信息吧
             if ($config['app_status']) {
                 Config::load(CONF_PATH . $module . $config['app_status'] . CONF_EXT);
             }
 
-            // 加载行为扩展文件
+            // 加载行为扩展文件，行为，就好比Yii里的事件吧，但也有些区别。 tags.php文件
             if (is_file(CONF_PATH . $module . 'tags' . EXT)) {
                 Hook::import(include CONF_PATH . $module . 'tags' . EXT);
             }
 
-            // 加载公共文件
+            // 加载公共文件,是模块下的common.php文件
             $path = APP_PATH . $module;
             if (is_file($path . 'common' . EXT)) {
                 include $path . 'common' . EXT;
@@ -285,7 +301,7 @@ class App
                 Lang::load($path . 'lang' . DS . Request::instance()->langset() . EXT);
             }
         }
-
+        //上述通过Config::load方法完成了把配置信息加载到内存，get方法一并全部返回
         return Config::get();
     }
 
@@ -618,6 +634,7 @@ class App
                 $rules = include RUNTIME_PATH . 'route.php';
                 is_array($rules) && Route::rules($rules);
             } else {
+                //路由配置文件列表，
                 $files = $config['route_config_file'];
                 foreach ($files as $file) {
                     if (is_file(CONF_PATH . $file . CONF_EXT)) {

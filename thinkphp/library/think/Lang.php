@@ -185,6 +185,7 @@ class Lang
 
     /**
      * 自动侦测设置获取语言选择
+     * 从$_GET,$_SERVER,$_COOKIE中侦测
      * @access public
      * @return string
      */

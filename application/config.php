@@ -76,7 +76,8 @@ return [
     // | URL设置
     // +----------------------------------------------------------------------
 
-    // PATHINFO变量名 用于兼容模式
+    // PATHINFO变量名 用于兼容模式，所谓兼容模式就是"s=/模块/控制器/动作/参数1/值1"这样的
+	//正常的PATHINFO是"/模块/控制器/动作/参数1/值1"的。现在的web服务器都支持了吧
     'var_pathinfo'           => 's',
     // 兼容PATH_INFO获取
     'pathinfo_fetch'         => ['ORIG_PATH_INFO', 'REDIRECT_PATH_INFO', 'REDIRECT_URL'],

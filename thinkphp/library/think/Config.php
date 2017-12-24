@@ -44,13 +44,14 @@ class Config
      * @param  string $name   配置名（如设置即表示二级配置）
      * @param  string $range  作用域
      * @return mixed
+	 * 在于load方法的不同之处，在于配置文件的后缀名（不是php,不是ymal),还是属于set方法的封装
      */
     public static function parse($config, $type = '', $name = '', $range = '')
     {
         $range = $range ?: self::$range;
 
         if (empty($type)) $type = pathinfo($config, PATHINFO_EXTENSION);
-
+		//$type带有斜杠？想不起来会是什么文件后缀。
         $class = false !== strpos($type, '\\') ?
             $type :
             '\\think\\config\\driver\\' . ucwords($type);
@@ -65,6 +66,8 @@ class Config
      * @param  string $name  配置名（如设置即表示二级配置）
      * @param  string $range 作用域
      * @return mixed
+	 * 该方法，是set方法的封装，只是分析了第一个参数（配置文件路径），
+	 * 最终还需set方法，把文件里的配置信息加载到代码（内存）中
      */
     public static function load($file, $name = '', $range = '')
     {
